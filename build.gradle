@@ -16,23 +16,13 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 //create a single Jar with all dependencies
-version=1.0
-//task releaseJar(type: Jar) {
-//	manifest {
-//		attributes 'Implementation-Title': 'Gradle Jar File Example',
-//		'Implementation-Version': version,
-//		'Main-Class': 'elastictransfor.ElasticTransforMain'
-//	}
-//	baseName = project.name + '-all'
-//	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-//	with jar
-//}
+version=0.1
 
 jar {
 	manifest {
 		attributes("Implementation-Title": "Gradle",
 		"Implementation-Version": version,
-		'Main-Class': 'elastictransfor.ElasticTransforMain')
+		'Main-Class': 'elasticbak.ElasticBakMain')
 	}
 	baseName = project.name
 	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
