@@ -1,4 +1,4 @@
-package elastictransfor;
+package elasticbak;
 
 import java.util.List;
 
@@ -10,17 +10,17 @@ import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import elastictransfor.Entities.ArgsSettingEntity;
-import elastictransfor.Entities.IndexesRelationEntity;
-import elastictransfor.Entities.ScriptEntity;
-import elastictransfor.utilities.ElasticsearchConnector;
-import elastictransfor.utilities.ElasticsearchCopyIndex;
-import elastictransfor.utilities.ElasticsearchIndexTools;
-import elastictransfor.utilities.JsonUtilities;
+import elasticbak.Entities.ArgsSettingEntity;
+import elasticbak.Entities.IndexesRelationEntity;
+import elasticbak.Entities.ScriptEntity;
+import elasticbak.utilities.ElasticsearchConnector;
+import elasticbak.utilities.ElasticsearchCopyIndex;
+import elasticbak.utilities.ElasticsearchIndexTools;
+import elasticbak.utilities.JsonUtilities;
 
-public class ElasticTransforMain {
+public class ElasticBakMain {
 
-	private static final Logger logger = LoggerFactory.getLogger(ElasticTransforMain.class);
+	private static final Logger logger = LoggerFactory.getLogger(ElasticBakMain.class);
 
 	public static void main(String[] args) throws Exception {
 		ObjectMapper objectMapper = new ObjectMapper();
@@ -31,9 +31,9 @@ public class ElasticTransforMain {
 		Client targetclient;
 
 		JCommander jc = new JCommander();
-		jc.setProgramName("java -jar elastictransfor.jar");
+		jc.setProgramName("java -jar elasticbak.jar");
 		jc.addObject(argssetting);
-		
+
 		/*
 		 * 解析输入参数
 		 */
@@ -49,22 +49,22 @@ public class ElasticTransforMain {
 			System.exit(0);
 		}
 
-		//解析脚本文件并执行相关操作
+		// 解析脚本文件并执行相关操作
 		if (argssetting.getScript_file() != null) {
 			String scriptstring = new JsonUtilities().ReadJsonFile(argssetting.getScript_file());
-			ScriptEntity script=(ScriptEntity) objectMapper.readValue(scriptstring, ScriptEntity.class);
+			ScriptEntity script = (ScriptEntity) objectMapper.readValue(scriptstring, ScriptEntity.class);
 			String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(script);
 			logger.info("Your Script setting is: \n\t" + json);
-			JsonNode node= objectMapper.readTree(scriptstring);
-						
-			if(node.get("indexes")==null){				
+			JsonNode node = objectMapper.readTree(scriptstring);
+
+			if (node.get("indexes") == null) {
 				logger.info("Script 'indexes' must be set!");
-				return;				
+				return;
 			}
-			
-			List<IndexesRelationEntity> indexrelation=script.getIndexesrelation();
-			
-			for(IndexesRelationEntity idx:indexrelation){
+
+			List<IndexesRelationEntity> indexrelation = script.getIndexesrelation();
+
+			for (IndexesRelationEntity idx : indexrelation) {
 				sourceclient = new ElasticsearchConnector(script.getSource_cluster(), script.getSource_host(),
 						script.getSource_port()).getClient();
 				targetclient = new ElasticsearchConnector(script.getTarget_cluster(), script.getTarget_host(),
@@ -72,10 +72,10 @@ public class ElasticTransforMain {
 				String idxjson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(idx);
 				logger.info("\n\t" + idxjson);
 				if (idx.getSource_index() == null || idx.getTarget_index() == null) {
-					logger.info("In script 'indexes.source_index' and 'indexes.target_index' must been set!");	
+					logger.info("In script 'indexes.source_index' and 'indexes.target_index' must been set!");
 					continue;
 				}
-				
+
 				switch (idx.getType().toUpperCase()) {
 				case "DATA":
 					System.out.println("TYPE IS DATA OK!");
@@ -84,31 +84,27 @@ public class ElasticTransforMain {
 								idx.getTarget_index(), idx.getDsl().toString());
 
 					} else {
-						cpidx.CopyIndex(sourceclient, idx.getSource_index(), targetclient,
-								idx.getTarget_index());
+						cpidx.CopyIndex(sourceclient, idx.getSource_index(), targetclient, idx.getTarget_index());
 					}
 					break;
 				case "META":
 					System.out.println("TYPE IS META OK!");
-					cpidx.CopyIndexMetadata(sourceclient, idx.getSource_index(), targetclient,
-							idx.getTarget_index());
+					cpidx.CopyIndexMetadata(sourceclient, idx.getSource_index(), targetclient, idx.getTarget_index());
 					break;
 				case "FORCE":
 					System.out.println("FORCE OK!");
 					if (esidxtools.IndexExistes(targetclient, idx.getTarget_index())) {
 						esidxtools.DeleteIndex(targetclient, idx.getTarget_index());
 					}
-								
-					cpidx.CopyIndexMetadata(sourceclient, idx.getSource_index(), targetclient,
-							idx.getTarget_index());
+
+					cpidx.CopyIndexMetadata(sourceclient, idx.getSource_index(), targetclient, idx.getTarget_index());
 
 					if (idx.getDsl() != null) {
 						cpidx.CopyIndexByQueryDsl(sourceclient, idx.getSource_index(), targetclient,
 								idx.getTarget_index(), idx.getDsl().toString());
 
 					} else {
-						cpidx.CopyIndex(sourceclient, idx.getSource_index(), targetclient,
-								idx.getTarget_index());
+						cpidx.CopyIndex(sourceclient, idx.getSource_index(), targetclient, idx.getTarget_index());
 					}
 					break;
 				default:
@@ -118,9 +114,9 @@ public class ElasticTransforMain {
 
 				sourceclient.close();
 				targetclient.close();
-								
+
 			}
-			
+
 			System.exit(0);
 		}
 

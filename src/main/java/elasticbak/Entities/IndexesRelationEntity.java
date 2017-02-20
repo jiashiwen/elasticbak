@@ -1,4 +1,4 @@
-package elastictransfor.Entities;
+package elasticbak.Entities;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
