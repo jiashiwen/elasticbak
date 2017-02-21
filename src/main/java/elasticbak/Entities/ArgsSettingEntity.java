@@ -117,4 +117,12 @@ public class ArgsSettingEntity {
 		this.script_file = script_file;
 	}
 
+	public String getDir() {
+		return dir;
+	}
+
+	public void setDir(String dir) {
+		this.dir = dir;
+	}
+
 }
