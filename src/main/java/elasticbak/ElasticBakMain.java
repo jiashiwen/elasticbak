@@ -11,18 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.ArgsSettingEntity;
-import elasticbak.Entities.IndexesRelationEntity;
-import elasticbak.Entities.ScriptEntity;
 import elasticbak.utilities.BackupEsIndex;
 import elasticbak.utilities.ElasticsearchConnector;
 import elasticbak.utilities.ElasticsearchCopyIndex;
 import elasticbak.utilities.ElasticsearchIndexTools;
 import elasticbak.utilities.FileUtilities;
-import elasticbak.utilities.JsonUtilities;
 import elasticbak.utilities.RestoreEsIndex;
 
 public class ElasticBakMain {
@@ -37,11 +33,10 @@ public class ElasticBakMain {
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArgsSettingEntity argssetting = new ArgsSettingEntity();
-		ElasticsearchCopyIndex cpidx = new ElasticsearchCopyIndex();
-		ElasticsearchIndexTools esidxtools = new ElasticsearchIndexTools();
+
 		BackupEsIndex backupindex = new BackupEsIndex();
-		RestoreEsIndex restoreindex=new RestoreEsIndex();
-		
+		RestoreEsIndex restoreindex = new RestoreEsIndex();
+
 		FileUtilities fileutilities = new FileUtilities();
 		Client client;
 
@@ -72,27 +67,54 @@ public class ElasticBakMain {
 			System.exit(0);
 		}
 
-		if (!argssetting.getDir().endsWith(File.separator)) {
-			argssetting.setDir(argssetting.getDir() + File.separator);
+		// 索引备份
+		if (argssetting.isExp() && (argssetting.isExp() ^ argssetting.isImp())) {
+			// 如果备份路径不以文件分隔符结尾，自动添加文件分隔符
+			if (!argssetting.getDir().endsWith(File.separator)) {
+				argssetting.setDir(argssetting.getDir() + File.separator);
+			}
+
+			// 创建备份目录
+			argssetting.setDir(argssetting.getDir() + argssetting.getIndex() + "_" + nowtime + File.separator);
+			fileutilities.createFolder(argssetting.getDir());
+
+			// 备份index meta data 包括settings和mapping
+			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
+					.getClient();
+			backupindex.backupIdxMeta(client, argssetting.getIndex(),
+					new File(argssetting.getDir() + argssetting.getIndex() + ".meta"));
+
+			// 备份索引数据
+			backupindex.BackupIdxData(client, argssetting.getIndex(), argssetting.getDir(), argssetting.getFilesize());
+			System.exit(0);
 		}
 
-		// 删除目录
-		// System.out.println(fileutilities.deleteDirectory(argssetting.getDir()
-		// + argssetting.getIndex()));
-
-		// 创建备份目录
-		argssetting.setDir(argssetting.getDir() + argssetting.getIndex() + "_" + nowtime + File.separator);
-		fileutilities.createFolder(argssetting.getDir());
-
-		// 备份index settings
-		client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
-				.getClient();
-		backupindex.backupIdxMeta(client, argssetting.getIndex(),
-				new File(argssetting.getDir() + argssetting.getIndex() + ".meta"));
+		// 恢复索引
+		if (argssetting.isImp() && (argssetting.isExp() ^ argssetting.isImp())) {
+			//判断文件是否存在
+			File file = new File(argssetting.getMetafile());
+			if(!file.exists()){
+				logger.error("Metafile not exists");
+				System.exit(0);
+			}
+			
+			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
+					.getClient();
+			
+			//从备份meta文件重建索引
+			restoreindex.CreateIdxFromMetaFile(client, argssetting.getIndex(),
+					new File(argssetting.getMetafile()));
+			
+			//恢复数据
+			List<File> datafiles=fileutilities.getFilesInTheFolder(argssetting.getDatafolder());
+			for(File f:datafiles){
+				if(f.getName().endsWith(".data")){
+					restoreindex.restoreDataFromFile(client, argssetting.getIndex(), f);
+				}
+			}
 		
-		//恢复索引
-		restoreindex.CreateIdxFromBak(client, argssetting.getIndex(), new File(argssetting.getDir() + argssetting.getIndex() + ".meta"));
-
+			
+		}
 		// 解析脚本文件并执行相关操作
 		// if (argssetting.getScript_file() != null) {
 		// String scriptstring = new
@@ -193,49 +215,6 @@ public class ElasticBakMain {
 		System.out.println(argssetting.getDsl());
 
 		Client targetclient;
-
-		// switch (argssetting.getType().toUpperCase()) {
-		// case "DATA":
-		// System.out.println("TYPE IS DATA OK!");
-		// if (argssetting.getDsl() != null) {
-		// cpidx.CopyIndexByQueryDsl(client, argssetting.getIndex(),
-		// targetclient,
-		// argssetting.getTarget_index(), argssetting.getDsl());
-		//
-		// } else {
-		// cpidx.CopyIndex(client, argssetting.getIndex(), targetclient,
-		// argssetting.getTarget_index());
-		// }
-		// break;
-		// case "META":
-		// System.out.println("TYPE IS META OK!");
-		// cpidx.CopyIndexMetadata(client, argssetting.getIndex(), targetclient,
-		// argssetting.getTarget_index());
-		// break;
-		// case "FORCE":
-		// System.out.println("FORCE OK!");
-		// if (esidxtools.IndexExistes(targetclient,
-		// argssetting.getTarget_index())) {
-		// esidxtools.DeleteIndex(targetclient, argssetting.getTarget_index());
-		// }
-		//
-		// cpidx.CopyIndexMetadata(client, argssetting.getIndex(), targetclient,
-		// argssetting.getTarget_index());
-		//
-		// if (argssetting.getDsl() != null) {
-		// cpidx.CopyIndexByQueryDsl(client, argssetting.getIndex(),
-		// targetclient,
-		// argssetting.getTarget_index(), argssetting.getDsl());
-		//
-		// } else {
-		// cpidx.CopyIndex(client, argssetting.getIndex(), targetclient,
-		// argssetting.getTarget_index());
-		// }
-		// break;
-		// default:
-		// System.out.println("type must be set [data,meta,force]");
-		// break;
-		// }
 
 		client.close();
 

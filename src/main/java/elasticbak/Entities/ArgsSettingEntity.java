@@ -7,10 +7,10 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--help", help = true)
 	private boolean help = false;
 
-	@Parameter(names = "--exp", description = "export mode",arity=0)
+	@Parameter(names = "--exp", description = "export mode", arity = 0)
 	private boolean exp = false;
 
-	@Parameter(names = "--imp", description = "import mode",arity=0)
+	@Parameter(names = "--imp", description = "import mode", arity = 0)
 	private boolean imp = false;
 
 	@Parameter(names = "--cluster", description = "Elasticsearch cluster name,default is 'elasticsearch")
@@ -24,9 +24,12 @@ public class ArgsSettingEntity {
 
 	@Parameter(names = "--index", required = false, description = "Index name")
 	private String index;
-	
-	@Parameter(names="--dir",description ="Backup directory,default is current")
-	private String dir="./";
+
+	@Parameter(names = "--dir", description = "Backup directory,default is current")
+	private String dir = "./";
+
+	@Parameter(names = "--filesize", description = "Quantity docs per file,default is 500")
+	private int filesize = 500;
 
 	@Parameter(names = "--type", description = "Transfor type value is [data,meta,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
 	private String type = "meta";
@@ -36,6 +39,12 @@ public class ArgsSettingEntity {
 
 	@Parameter(names = "--script_file", description = "execute script file write by json ")
 	private String script_file;
+
+	@Parameter(names = "--datafolder", description = "The data file store path")
+	private String datafolder = "";
+
+	@Parameter(names = "--metafile", description = "Restore Index from metadata,include sttings and mappings")
+	private String metafile = "";
 
 	public boolean isHelp() {
 		return help;
@@ -123,6 +132,30 @@ public class ArgsSettingEntity {
 
 	public void setDir(String dir) {
 		this.dir = dir;
+	}
+
+	public int getFilesize() {
+		return filesize;
+	}
+
+	public void setFilesize(int filesize) {
+		this.filesize = filesize;
+	}
+
+	public String getMetafile() {
+		return metafile;
+	}
+
+	public void setMetafile(String metafile) {
+		this.metafile = metafile;
+	}
+
+	public String getDatafolder() {
+		return datafolder;
+	}
+
+	public void setDatafolder(String datafolder) {
+		this.datafolder = datafolder;
 	}
 
 }
