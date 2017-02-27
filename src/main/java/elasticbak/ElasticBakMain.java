@@ -4,7 +4,13 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
@@ -14,11 +20,12 @@ import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.ArgsSettingEntity;
+import elasticbak.Entities.BackupEntity;
 import elasticbak.utilities.BackupEsIndex;
+import elasticbak.utilities.CheckArgs;
 import elasticbak.utilities.ElasticsearchConnector;
-import elasticbak.utilities.ElasticsearchCopyIndex;
-import elasticbak.utilities.ElasticsearchIndexTools;
 import elasticbak.utilities.FileUtilities;
+import elasticbak.utilities.ParallelBackup;
 import elasticbak.utilities.RestoreEsIndex;
 
 public class ElasticBakMain {
@@ -34,7 +41,6 @@ public class ElasticBakMain {
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArgsSettingEntity argssetting = new ArgsSettingEntity();
 
-		BackupEsIndex backupindex = new BackupEsIndex();
 		RestoreEsIndex restoreindex = new RestoreEsIndex();
 
 		FileUtilities fileutilities = new FileUtilities();
@@ -61,59 +67,82 @@ public class ElasticBakMain {
 			System.exit(0);
 		}
 
-		// 计算exp和imp做异或运算即次两个参数必须有一个且只有一个为真
-		if (!(argssetting.isExp() ^ argssetting.isImp())) {
+		if (!new CheckArgs(argssetting).check()) {
 			jc.usage();
 			System.exit(0);
 		}
 
 		// 索引备份
-		if (argssetting.isExp() && (argssetting.isExp() ^ argssetting.isImp())) {
+		if (argssetting.isExp()) {
+
+			ExecutorService execservice = Executors.newFixedThreadPool(argssetting.getThreads());
+			CompletionService<Long> completionService = new ExecutorCompletionService<Long>(execservice);
+
 			// 如果备份路径不以文件分隔符结尾，自动添加文件分隔符
-			if (!argssetting.getDir().endsWith(File.separator)) {
-				argssetting.setDir(argssetting.getDir() + File.separator);
+			if (!argssetting.getBackupdir().endsWith(File.separator)) {
+				argssetting.setBackupdir(argssetting.getBackupdir() + File.separator);
 			}
 
-			// 创建备份目录
-			argssetting.setDir(argssetting.getDir() + argssetting.getIndex() + "_" + nowtime + File.separator);
-			fileutilities.createFolder(argssetting.getDir());
+			Set<String> backupindexesset = new HashSet<String>();
+			for (String idx : argssetting.getBackupindexes().split(",")) {
+				backupindexesset.add(idx);
+			}
 
-			// 备份index meta data 包括settings和mapping
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
-			backupindex.backupIdxMeta(client, argssetting.getIndex(),
-					new File(argssetting.getDir() + argssetting.getIndex() + ".meta"));
 
-			// 备份索引数据
-			backupindex.BackupIdxData(client, argssetting.getIndex(), argssetting.getDir(), argssetting.getFilesize());
+			for (String bakidx : backupindexesset) {
+				BackupEntity backup = new BackupEntity();
+				String backpath = argssetting.getBackupdir() + bakidx + File.separator;
+				backup.setClient(client);
+				backup.setBackuppath(backpath);
+				backup.setIndexname(bakidx);
+				backup.setDocsperfile(argssetting.getFilesize());
+
+				// 创建备份目录
+				fileutilities.createFolder(backpath);
+
+				completionService.submit(new ParallelBackup(new BackupEsIndex(backup)));
+
+				// BackupEsIndex backupindex = new BackupEsIndex(backup);
+				// // 备份index meta data 包括settings和mapping
+				// backupindex.backupIdxMeta();
+				//
+				// // 备份索引数据
+				// backupindex.BackupIdxData();
+
+			}
+			
+			for (String bakidx : backupindexesset) {
+				completionService.take().get();
+			}
 			System.exit(0);
 		}
 
 		// 恢复索引
-		if (argssetting.isImp() && (argssetting.isExp() ^ argssetting.isImp())) {
-			//判断文件是否存在
+		if (argssetting.isImp()) {
+			// 判断文件是否存在
 			File file = new File(argssetting.getMetafile());
-			if(!file.exists()){
+			if (!file.exists()) {
 				logger.error("Metafile not exists");
 				System.exit(0);
 			}
-			
+
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
-			
-			//从备份meta文件重建索引
-			restoreindex.CreateIdxFromMetaFile(client, argssetting.getIndex(),
+
+			// 从备份meta文件重建索引
+			restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
 					new File(argssetting.getMetafile()));
-			
-			//恢复数据
-			List<File> datafiles=fileutilities.getFilesInTheFolder(argssetting.getDatafolder());
-			for(File f:datafiles){
-				if(f.getName().endsWith(".data")){
-					restoreindex.restoreDataFromFile(client, argssetting.getIndex(), f);
+
+			// 恢复数据
+			List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getDatafolder());
+			for (File f : datafiles) {
+				if (f.getName().endsWith(".data")) {
+					restoreindex.restoreDataFromFile(client, argssetting.getRestoreindex(), f);
 				}
 			}
-		
-			
+
 		}
 		// 解析脚本文件并执行相关操作
 		// if (argssetting.getScript_file() != null) {
@@ -200,12 +229,6 @@ public class ElasticBakMain {
 		// System.exit(0);
 		// }
 
-		if (argssetting.getIndex() == null) {
-			logger.info("index name must been set!");
-			jc.usage();
-			System.exit(0);
-		}
-
 		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
 		logger.info("Your command line setting is: \n\t" + json);
 
@@ -213,8 +236,6 @@ public class ElasticBakMain {
 				.getClient();
 
 		System.out.println(argssetting.getDsl());
-
-		Client targetclient;
 
 		client.close();
 

@@ -22,15 +22,21 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--port", description = "Elasticsearch port,default is 9300")
 	private int port = 9300;
 
-	@Parameter(names = "--index", required = false, description = "Index name")
-	private String index;
+	@Parameter(names = "--backupindexes", required = false, description = "Index name")
+	private String backupindexes;
+	
+	@Parameter(names = "--restoreindex", required = false, description = "Index name")
+	private String restoreindex;
 
-	@Parameter(names = "--dir", description = "Backup directory,default is current")
-	private String dir = "./";
+	@Parameter(names = "--backupdir", description = "Backup directory,default is current")
+	private String backupdir = "./";
 
 	@Parameter(names = "--filesize", description = "Quantity docs per file,default is 500")
 	private int filesize = 500;
 
+	@Parameter(names = "--threads", description = "Threads for backup or restore,default is cpu max processors")
+	private int threads = Runtime.getRuntime().availableProcessors();
+	
 	@Parameter(names = "--type", description = "Transfor type value is [data,meta,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
 	private String type = "meta";
 
@@ -41,7 +47,7 @@ public class ArgsSettingEntity {
 	private String script_file;
 
 	@Parameter(names = "--datafolder", description = "The data file store path")
-	private String datafolder = "";
+	private String datafolder;
 
 	@Parameter(names = "--metafile", description = "Restore Index from metadata,include sttings and mappings")
 	private String metafile = "";
@@ -94,12 +100,13 @@ public class ArgsSettingEntity {
 		this.port = port;
 	}
 
-	public String getIndex() {
-		return index;
+	
+	public String getBackupindexes() {
+		return backupindexes;
 	}
 
-	public void setIndex(String index) {
-		this.index = index;
+	public void setBackupindexes(String backupindexes) {
+		this.backupindexes = backupindexes;
 	}
 
 	public String getType() {
@@ -126,12 +133,22 @@ public class ArgsSettingEntity {
 		this.script_file = script_file;
 	}
 
-	public String getDir() {
-		return dir;
+	
+
+	public String getRestoreindex() {
+		return restoreindex;
 	}
 
-	public void setDir(String dir) {
-		this.dir = dir;
+	public void setRestoreindex(String restoreindex) {
+		this.restoreindex = restoreindex;
+	}
+
+	public String getBackupdir() {
+		return backupdir;
+	}
+
+	public void setBackupdir(String backupdir) {
+		this.backupdir = backupdir;
 	}
 
 	public int getFilesize() {
@@ -156,6 +173,14 @@ public class ArgsSettingEntity {
 
 	public void setDatafolder(String datafolder) {
 		this.datafolder = datafolder;
+	}
+
+	public int getThreads() {
+		return threads;
+	}
+
+	public void setThreads(int threads) {
+		this.threads = threads;
 	}
 
 }
