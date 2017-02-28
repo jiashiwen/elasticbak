@@ -24,7 +24,7 @@ public class ArgsSettingEntity {
 
 	@Parameter(names = "--backupindexes", required = false, description = "Index name")
 	private String backupindexes;
-	
+
 	@Parameter(names = "--restoreindex", required = false, description = "Index name")
 	private String restoreindex;
 
@@ -36,7 +36,7 @@ public class ArgsSettingEntity {
 
 	@Parameter(names = "--threads", description = "Threads for backup or restore,default is cpu max processors")
 	private int threads = Runtime.getRuntime().availableProcessors();
-	
+
 	@Parameter(names = "--type", description = "Transfor type value is [data,meta,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
 	private String type = "meta";
 
@@ -46,8 +46,8 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--script_file", description = "execute script file write by json ")
 	private String script_file;
 
-	@Parameter(names = "--datafolder", description = "The data file store path")
-	private String datafolder;
+	@Parameter(names = "--backupset", description = "The folder stored backup data include .meta file and some .data files ")
+	private String backupset;
 
 	@Parameter(names = "--metafile", description = "Restore Index from metadata,include sttings and mappings")
 	private String metafile = "";
@@ -100,7 +100,6 @@ public class ArgsSettingEntity {
 		this.port = port;
 	}
 
-	
 	public String getBackupindexes() {
 		return backupindexes;
 	}
@@ -132,8 +131,6 @@ public class ArgsSettingEntity {
 	public void setScript_file(String script_file) {
 		this.script_file = script_file;
 	}
-
-	
 
 	public String getRestoreindex() {
 		return restoreindex;
@@ -167,12 +164,12 @@ public class ArgsSettingEntity {
 		this.metafile = metafile;
 	}
 
-	public String getDatafolder() {
-		return datafolder;
+	public String getBackupset() {
+		return backupset;
 	}
 
-	public void setDatafolder(String datafolder) {
-		this.datafolder = datafolder;
+	public void setBackupset(String backupset) {
+		this.backupset = backupset;
 	}
 
 	public int getThreads() {

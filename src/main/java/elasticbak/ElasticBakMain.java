@@ -21,11 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.ArgsSettingEntity;
 import elasticbak.Entities.BackupEntity;
+import elasticbak.Entities.RestoreDataEntity;
+import elasticbak.service.ParallelBackupService;
+import elasticbak.service.ParallelRestoreDataService;
 import elasticbak.utilities.BackupEsIndex;
 import elasticbak.utilities.CheckArgs;
 import elasticbak.utilities.ElasticsearchConnector;
 import elasticbak.utilities.FileUtilities;
-import elasticbak.utilities.ParallelBackup;
 import elasticbak.utilities.RestoreEsIndex;
 
 public class ElasticBakMain {
@@ -40,8 +42,6 @@ public class ElasticBakMain {
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArgsSettingEntity argssetting = new ArgsSettingEntity();
-
-		RestoreEsIndex restoreindex = new RestoreEsIndex();
 
 		FileUtilities fileutilities = new FileUtilities();
 		Client client;
@@ -74,7 +74,6 @@ public class ElasticBakMain {
 
 		// 索引备份
 		if (argssetting.isExp()) {
-
 			ExecutorService execservice = Executors.newFixedThreadPool(argssetting.getThreads());
 			CompletionService<Long> completionService = new ExecutorCompletionService<Long>(execservice);
 
@@ -102,17 +101,9 @@ public class ElasticBakMain {
 				// 创建备份目录
 				fileutilities.createFolder(backpath);
 
-				completionService.submit(new ParallelBackup(new BackupEsIndex(backup)));
-
-				// BackupEsIndex backupindex = new BackupEsIndex(backup);
-				// // 备份index meta data 包括settings和mapping
-				// backupindex.backupIdxMeta();
-				//
-				// // 备份索引数据
-				// backupindex.BackupIdxData();
-
+				completionService.submit(new ParallelBackupService(new BackupEsIndex(backup)));
 			}
-			
+
 			for (String bakidx : backupindexesset) {
 				completionService.take().get();
 			}
@@ -121,6 +112,9 @@ public class ElasticBakMain {
 
 		// 恢复索引
 		if (argssetting.isImp()) {
+			ExecutorService execservice = Executors.newFixedThreadPool(argssetting.getThreads());
+			CompletionService<Long> completionService = new ExecutorCompletionService<Long>(execservice);
+			int tasks = 0;
 			// 判断文件是否存在
 			File file = new File(argssetting.getMetafile());
 			if (!file.exists()) {
@@ -131,17 +125,32 @@ public class ElasticBakMain {
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
 
+			RestoreEsIndex restoreindex = new RestoreEsIndex();
 			// 从备份meta文件重建索引
 			restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
 					new File(argssetting.getMetafile()));
 
 			// 恢复数据
-			List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getDatafolder());
+			List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getBackupset());
 			for (File f : datafiles) {
 				if (f.getName().endsWith(".data")) {
-					restoreindex.restoreDataFromFile(client, argssetting.getRestoreindex(), f);
+					RestoreDataEntity data = new RestoreDataEntity();
+					data.setClient(client);
+					data.setIndexname(argssetting.getRestoreindex());
+					data.setDatafile(f);
+					RestoreEsIndex ridx = new RestoreEsIndex();
+					ridx.setRestordata(data);
+					completionService.submit(new ParallelRestoreDataService(ridx));
+					tasks++;
 				}
 			}
+
+			for (int i = 0; i < tasks; i++) {
+				completionService.take().get();
+			}
+
+			client.close();
+			System.exit(0);
 
 		}
 		// 解析脚本文件并执行相关操作
