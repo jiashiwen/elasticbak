@@ -12,11 +12,14 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
+import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.ArgsSettingEntity;
@@ -44,6 +47,7 @@ public class ElasticBakMain {
 		ArgsSettingEntity argssetting = new ArgsSettingEntity();
 
 		FileUtilities fileutilities = new FileUtilities();
+		CheckArgs check;
 		Client client;
 
 		JCommander jc = new JCommander();
@@ -62,15 +66,19 @@ public class ElasticBakMain {
 			System.exit(0);
 		}
 
+		check=new CheckArgs(argssetting);
 		if (argssetting.isHelp()) {
 			jc.usage();
 			System.exit(0);
 		}
 
-		if (!new CheckArgs(argssetting).check()) {
+		if (!check.check()) {
 			jc.usage();
 			System.exit(0);
 		}
+		
+		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
+		logger.info("Your command line setting is: \n\t" + json);
 
 		// 索引备份
 		if (argssetting.isExp()) {
@@ -82,15 +90,12 @@ public class ElasticBakMain {
 				argssetting.setBackupdir(argssetting.getBackupdir() + File.separator);
 			}
 
-			Set<String> backupindexesset = new HashSet<String>();
-			for (String idx : argssetting.getBackupindexes().split(",")) {
-				backupindexesset.add(idx);
-			}
-
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
 
-			for (String bakidx : backupindexesset) {
+
+
+			for (String bakidx : check.getBackupindeces()) {
 				BackupEntity backup = new BackupEntity();
 				String backpath = argssetting.getBackupdir() + bakidx + File.separator;
 				backup.setClient(client);
@@ -104,7 +109,7 @@ public class ElasticBakMain {
 				completionService.submit(new ParallelBackupService(new BackupEsIndex(backup)));
 			}
 
-			for (String bakidx : backupindexesset) {
+			for (String bakidx : check.getBackupindeces()) {
 				completionService.take().get();
 			}
 			System.exit(0);
@@ -238,13 +243,12 @@ public class ElasticBakMain {
 		// System.exit(0);
 		// }
 
-		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
-		logger.info("Your command line setting is: \n\t" + json);
+
 
 		client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 				.getClient();
 
-		System.out.println(argssetting.getDsl());
+
 
 		client.close();
 
