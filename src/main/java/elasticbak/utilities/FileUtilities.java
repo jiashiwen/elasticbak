@@ -20,10 +20,8 @@ public class FileUtilities {
 			destDirName = destDirName + File.separator;
 		}
 		if (dir.mkdirs()) {// 创建目标目录
-			System.out.println("创建目录成功！" + destDirName);
 			return true;
 		} else {
-			System.out.println("创建目录失败！");
 			return false;
 		}
 	}
@@ -100,13 +98,16 @@ public class FileUtilities {
 		Boolean flag = false;
 		File file = new File(sPath);
 		// 判断目录或文件是否存在
-		if (!file.exists()) { // 不存在返回 false
+		if (!file.exists()) {
+			// 不存在返回 false
 			return flag;
 		} else {
 			// 判断是否为文件
-			if (file.isFile()) { // 为文件时调用删除文件方法
+			if (file.isFile()) {
+				// 为文件时调用删除文件方法
 				return this.deleteFile(sPath);
-			} else { // 为目录时调用删除目录方法
+			} else {
+				// 为目录时调用删除目录方法
 				return deleteDirectory(sPath);
 			}
 		}
