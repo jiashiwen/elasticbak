@@ -49,11 +49,11 @@ public class BackupEsIndex {
 
 	public BackupEsIndex(BackupEntity backupentity) {
 		this.backup = backupentity;
-		logger = LoggerFactory.getLogger(this.getClass());
+		logger = LoggerFactory.getLogger("elasticbak");
 	}
 
 	public BackupEsIndex() {
-		logger = LoggerFactory.getLogger(this.getClass());
+		logger = LoggerFactory.getLogger("elasticbak");
 	}
 
 	/**
