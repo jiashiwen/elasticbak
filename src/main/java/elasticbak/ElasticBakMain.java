@@ -77,8 +77,9 @@ public class ElasticBakMain {
 			System.exit(0);
 		}
 		
-		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
-		logger.info("Your command line setting is: \n\t" + json);
+//		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
+		String json = objectMapper.writeValueAsString(argssetting);
+		logger.info("Your command line setting is: " + json);
 
 		// 索引备份
 		if (argssetting.isExp()) {

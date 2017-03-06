@@ -38,6 +38,7 @@ public class BackupEsIndex {
 	private Logger logger;
 	private JsonUtilities jsonutil = new JsonUtilities();
 	private BackupEntity backup;
+	private Map<String, Object> logmsg;
 
 	public BackupEntity getBackup() {
 		return backup;
@@ -54,6 +55,7 @@ public class BackupEsIndex {
 
 	public BackupEsIndex() {
 		logger = LoggerFactory.getLogger("elasticbak");
+
 	}
 
 	/**
@@ -69,6 +71,7 @@ public class BackupEsIndex {
 	 */
 	public void backupIdxMeta() throws FileNotFoundException, IOException, InterruptedException, ExecutionException {
 
+		logmsg = new HashMap<String, Object>();
 		// 获取index settings
 		ClusterState cs = backup.getClient().admin().cluster().prepareState().setIndices(backup.getIndexname())
 				.execute().actionGet().getState();
@@ -94,10 +97,19 @@ public class BackupEsIndex {
 			backup.setBackuppath(backup.getBackuppath() + File.separator);
 		}
 
+		if (0 == backup.getBackuppath().indexOf("./")) {
+			backup.setBackuppath(backup.getBackuppath().replace("./", ""));
+		}
+
 		ObjectOutputStream oos = new ObjectOutputStream(
 				new FileOutputStream(backup.getBackuppath() + backup.getIndexname() + ".meta"));
 		oos.writeObject(indexmeta);
 		oos.close();
+		// 写日志
+		logmsg.put("Action", "backup index meta");
+		logmsg.put("Index", backup.getIndexname());
+		logmsg.put("backupfile", new File(backup.getBackuppath() + backup.getIndexname() + ".meta").getAbsolutePath());
+		logger.info(jsonutil.MapToJson(logmsg));
 	}
 
 	/**
@@ -107,7 +119,7 @@ public class BackupEsIndex {
 	 * @param index
 	 * @param path
 	 * @param docsperfile
-	 * @throws IOException 
+	 * @throws IOException
 	 */
 	public void BackupIdxData() throws IOException {
 		long count = 0;
@@ -118,42 +130,59 @@ public class BackupEsIndex {
 
 		doc.delete(0, doc.length());
 		docmap.clear();
-					SearchResponse scrollResp = backup.getClient().prepareSearch(backup.getIndexname())
-					.addSort(SortParseElement.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000))
-					.setQuery(qb).setSize(backup.getDocsperfile()).execute().actionGet();
+		SearchResponse scrollResp = backup.getClient().prepareSearch(backup.getIndexname())
+				.addSort(SortParseElement.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000)).setQuery(qb)
+				.setSize(backup.getDocsperfile()).execute().actionGet();
 
-			while (true) {
-				if (!backup.getBackuppath().endsWith(File.separator)) {
-					backup.setBackuppath(backup.getBackuppath() + File.separator);
-				}
-				String filename = backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data";
-				FileWriter fw = new FileWriter(filename);
+		if (!backup.getBackuppath().endsWith(File.separator)) {
+			backup.setBackuppath(backup.getBackuppath() + File.separator);
+		}
 
-				for (SearchHit hit : scrollResp.getHits().getHits()) {
-					docmap.clear();
-					// System.out.println(hit.getSourceAsString().replaceAll("\\s+",
-					// ""));
-					docmap.put("_type", hit.getType());
-					docmap.put("_id", hit.getId());
-					docmap.put("_source", hit.getSource());
-					fw.write(jsonutil.MapToJson(docmap) + System.getProperty("line.separator"));
-					count++;
-				}
-				scrollResp = backup.getClient().prepareSearchScroll(scrollResp.getScrollId())
-						.setScroll(new TimeValue(60000)).execute().actionGet();
-				fw.flush();
-				fw.close();
-				filenumber++;
-				logger.info("Write file " +backup.getBackuppath()+filename + " complete!");
-				
-				if (scrollResp.getHits().getHits().length == 0) {
-					break;
-				}
+		if (0 == backup.getBackuppath().indexOf("./")) {
+			backup.setBackuppath(backup.getBackuppath().replace("./", ""));
+		}
+
+		logmsg = new HashMap<String, Object>();
+
+		while (true) {
+
+			String filename = backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data";
+			FileWriter fw = new FileWriter(filename);
+
+			for (SearchHit hit : scrollResp.getHits().getHits()) {
+				docmap.clear();
+				// System.out.println(hit.getSourceAsString().replaceAll("\\s+",
+				// ""));
+				docmap.put("_type", hit.getType());
+				docmap.put("_id", hit.getId());
+				docmap.put("_source", hit.getSource());
+				fw.write(jsonutil.MapToJson(docmap) + System.getProperty("line.separator"));
+				count++;
 			}
+			scrollResp = backup.getClient().prepareSearchScroll(scrollResp.getScrollId())
+					.setScroll(new TimeValue(60000)).execute().actionGet();
+			fw.flush();
+			fw.close();
+			filenumber++;
+			logmsg.clear();
+			logmsg.clear();
+			logmsg.put("Action", "backup index data");
+			logmsg.put("Index", backup.getIndexname());
+			logmsg.put("backupfile",
+					new File(backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data")
+							.getAbsolutePath());
+			logger.info(jsonutil.MapToJson(logmsg));
 
-			logger.info("Backup index " + backup.getIndexname() + " " + count + " documents" + " to "
-					+ backup.getBackuppath() + " complete!");
-		
+			if (scrollResp.getHits().getHits().length == 0) {
+				break;
+			}
+		}
+		logmsg.clear();
+		logmsg.put("Action", "backup index data");
+		logmsg.put("Index", backup.getIndexname());
+		logmsg.put("Backupset", new File(backup.getBackuppath()));
+		logmsg.put("Index docs", count);
+		logger.info(jsonutil.MapToJson(logmsg));
 	}
 
 }
