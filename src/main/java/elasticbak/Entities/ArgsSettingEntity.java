@@ -35,7 +35,7 @@ public class ArgsSettingEntity {
 	private int filesize = 500;
 
 	@Parameter(names = "--threads", description = "Threads for backup or restore,default is cpu max processors")
-	private int threads = Runtime.getRuntime().availableProcessors();
+	private int threads = 2;
 
 	@Parameter(names = "--type", description = "Transfor type value is [data,meta,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
 	private String type = "meta";
