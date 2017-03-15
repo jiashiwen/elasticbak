@@ -6,7 +6,16 @@ public class BackupEntity {
 	private Client client;
 	private String backuppath;
 	private String indexname;
+	private Boolean zip;
 	private int docsperfile;
+
+	public Boolean getZip() {
+		return zip;
+	}
+
+	public void setZip(Boolean zip) {
+		this.zip = zip;
+	}
 
 	public Client getClient() {
 		return client;

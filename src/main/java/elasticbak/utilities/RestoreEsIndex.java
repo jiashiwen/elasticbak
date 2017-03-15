@@ -16,17 +16,28 @@ import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import elasticbak.Entities.IndexMeta;
 import elasticbak.Entities.RestoreDataEntity;
 import elasticbak.Entities.RestoreIndexEntity;
+import net.lingala.zip4j.exception.ZipException;
 
 public class RestoreEsIndex {
 
 	private BufferedReader reader;
 	private ObjectInputStream objectInputStream;
+	private JsonUtilities jsonutil = new JsonUtilities();
 	private RestoreIndexEntity restoreindex;
 	private RestoreDataEntity restordata;
+	private Map<String, Object> logmsg;
+	private Logger logger;
+
+	public RestoreEsIndex() {
+		logger = LoggerFactory.getLogger("elasticbak");
+		logmsg = logmsg = new HashMap<String, Object>();
+	}
 
 	public RestoreIndexEntity getRestoreindex() {
 		return restoreindex;
@@ -77,33 +88,48 @@ public class RestoreEsIndex {
 
 		// 创建索引
 		client.admin().indices().prepareCreate(indexname).setSettings(settingbuilder).get();
-
+		logmsg.clear();
+		logmsg.put("Action", "Create index");
+		logmsg.put("Index", indexname);	
+		logger.info(jsonutil.MapToJson(logmsg));
+		
 		// 创建索引mapping
 		for (String key : mappings.keySet()) {
-			System.out.println(mappings.get(key) instanceof Map<?, ?>);
 			client.admin().indices().preparePutMapping(indexname).setType(key).setSource((Map<?, ?>) mappings.get(key))
 					.get();
-		}
-
+		}      
+		logmsg.clear();
+		logmsg.put("Action", "Add index mapping");
+		logmsg.put("Index", indexname);	
+		logmsg.put("mapping", mappings);
+		logger.info(jsonutil.MapToJson(logmsg));
 	}
 
 	public void restoreDataFromFile() throws IOException {
 		this.restoreDataFromFile(restordata);
 	}
 
+	public void restoreDataFromZipFile() throws IOException, ZipException {
+		this.restoreDataFromZipFile(restordata);
+	}
+
 	public void restoreDataFromFile(RestoreDataEntity rdata) throws IOException {
 		this.restoreDataFromFile(rdata.getClient(), rdata.getIndexname(), rdata.getDatafile());
 	}
 
+	public void restoreDataFromZipFile(RestoreDataEntity rdata) throws IOException, ZipException {
+		this.restoreDataFromZipFile(rdata.getClient(), rdata.getIndexname(), rdata.getDatafile());
+	}
+
 	public void restoreDataFromFile(Client client, String indexname, File datafile) throws IOException {
+
 		if (datafile.getName().endsWith(".data")) {
 			JsonUtilities jsonutil = new JsonUtilities();
 			Map<String, Object> map;
-			System.out.println(datafile.getAbsolutePath());
-
+		
 			reader = new BufferedReader(new FileReader(datafile));
 			BulkRequestBuilder bulkRequest = client.prepareBulk();
-			
+
 			String tempString = null;
 			// 一次读一行，读入null时文件结束
 			while ((tempString = reader.readLine()) != null) {
@@ -114,9 +140,29 @@ public class RestoreEsIndex {
 
 			}
 			bulkRequest.execute().actionGet();
-			
-			System.out.println(datafile.getAbsolutePath() + ":End!!!");
 			client.admin().indices().prepareRefresh(indexname).get();
+			
+			logmsg.clear();
+			logmsg.put("Action", "Restore data");
+			logmsg.put("Index", indexname);	
+			logmsg.put("FileName", datafile.getAbsolutePath());
+			logger.info(jsonutil.MapToJson(logmsg));
+		}
+
+	}
+
+	public void restoreDataFromZipFile(Client client, String indexname, File zipfile) throws IOException, ZipException {
+		if (zipfile.getName().endsWith(".data.zip")) {
+			ZipUtilities ziputil = new ZipUtilities();
+			FileUtilities fileutil = new FileUtilities();
+			ziputil.unzipfile(zipfile, zipfile.getAbsolutePath().replace(zipfile.getName(), ""), "");
+			logmsg.clear();
+			logmsg.put("Action", "Unzip file");
+			logmsg.put("Index", indexname);	
+			logmsg.put("FileName", zipfile.getAbsolutePath());
+			logger.info(jsonutil.MapToJson(logmsg));
+			this.restoreDataFromFile(client, indexname, new File(zipfile.getAbsolutePath().replace(".zip", "")));
+			fileutil.deleteFile(zipfile.getAbsolutePath().replace(".zip", ""));
 		}
 
 	}

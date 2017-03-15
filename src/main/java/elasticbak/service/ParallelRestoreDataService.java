@@ -3,11 +3,10 @@ package elasticbak.service;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 
-import elasticbak.Entities.RestoreDataEntity;
 import elasticbak.utilities.RestoreEsIndex;
+import net.lingala.zip4j.exception.ZipException;
 
-public class ParallelRestoreDataService implements Callable<Long>{
-	
+public class ParallelRestoreDataService implements Callable<Long> {
 
 	private RestoreEsIndex restoreesindex;
 
@@ -15,28 +14,23 @@ public class ParallelRestoreDataService implements Callable<Long>{
 		return restoreesindex;
 	}
 
-
-
-
 	public void setRestoreesindex(RestoreEsIndex restoreesindex) {
 		this.restoreesindex = restoreesindex;
 	}
 
-	public ParallelRestoreDataService(RestoreEsIndex ridx){
+	public ParallelRestoreDataService(RestoreEsIndex ridx) {
 		this.setRestoreesindex(ridx);
 	}
 
-
 	@Override
-	public Long call() {
-		
-		try {
+	public Long call() throws IOException, ZipException {
+
+		if (restoreesindex.getRestordata().getDatafile().getAbsolutePath().endsWith(".data.zip")) {
+			restoreesindex.restoreDataFromZipFile();
+		} else {
 			restoreesindex.restoreDataFromFile();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
-		
+
 		return new Long(Thread.currentThread().getId());
 	}
 

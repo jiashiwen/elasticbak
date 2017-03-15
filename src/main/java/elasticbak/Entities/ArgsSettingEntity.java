@@ -34,7 +34,7 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--filesize", description = "Quantity docs per file,default is 500")
 	private int filesize = 500;
 
-	@Parameter(names = "--threads", description = "Threads for backup or restore,default is cpu max processors")
+	@Parameter(names = "--threads", description = "Threads for backup or restore,default is 2")
 	private int threads = 2;
 
 	@Parameter(names = "--type", description = "Transfor type value is [data,meta,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
@@ -51,6 +51,18 @@ public class ArgsSettingEntity {
 
 	@Parameter(names = "--metafile", description = "Restore Index from metadata,include sttings and mappings")
 	private String metafile = "";
+
+	@Parameter(names="--zip", description="Zip datafile ,default is false",arity = 0)
+	private Boolean zip=false;
+
+	
+	public Boolean getZip() {
+		return zip;
+	}
+
+	public void setZip(Boolean zip) {
+		this.zip = zip;
+	}
 
 	public boolean isHelp() {
 		return help;

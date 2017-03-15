@@ -4,22 +4,17 @@ import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletionService;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
-import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
 import org.elasticsearch.client.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.beust.jcommander.JCommander;
-import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.ArgsSettingEntity;
@@ -102,6 +97,7 @@ public class ElasticBakMain {
 				backup.setClient(client);
 				backup.setBackuppath(backpath);
 				backup.setIndexname(bakidx);
+				backup.setZip(argssetting.getZip());
 				backup.setDocsperfile(argssetting.getFilesize());
 
 				// 创建备份目录
@@ -139,7 +135,7 @@ public class ElasticBakMain {
 			// 恢复数据
 			List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getBackupset());
 			for (File f : datafiles) {
-				if (f.getName().endsWith(".data")) {
+				if (f.getName().endsWith(".data")||f.getName().endsWith(".data.zip")) {
 					RestoreDataEntity data = new RestoreDataEntity();
 					data.setClient(client);
 					data.setIndexname(argssetting.getRestoreindex());
@@ -159,97 +155,9 @@ public class ElasticBakMain {
 			System.exit(0);
 
 		}
-		// 解析脚本文件并执行相关操作
-		// if (argssetting.getScript_file() != null) {
-		// String scriptstring = new
-		// JsonUtilities().ReadJsonFile(argssetting.getScript_file());
-		// ScriptEntity script = (ScriptEntity)
-		// objectMapper.readValue(scriptstring, ScriptEntity.class);
-		// String json =
-		// objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(script);
-		// logger.info("Your Script setting is: \n\t" + json);
-		// JsonNode node = objectMapper.readTree(scriptstring);
-		//
-		// if (node.get("indexes") == null) {
-		// logger.info("Script 'indexes' must be set!");
-		// return;
-		// }
-		//
-		// List<IndexesRelationEntity> indexrelation =
-		// script.getIndexesrelation();
-		//
-		// for (IndexesRelationEntity idx : indexrelation) {
-		// sourceclient = new ElasticsearchConnector(script.getSource_cluster(),
-		// script.getSource_host(),
-		// script.getSource_port()).getClient();
-		// targetclient = new ElasticsearchConnector(script.getTarget_cluster(),
-		// script.getTarget_host(),
-		// script.getTarget_port()).getClient();
-		// String idxjson =
-		// objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(idx);
-		// logger.info("\n\t" + idxjson);
-		// if (idx.getSource_index() == null || idx.getTarget_index() == null) {
-		// logger.info("In script 'indexes.source_index' and
-		// 'indexes.target_index' must been set!");
-		// continue;
-		// }
-		//
-		// switch (idx.getType().toUpperCase()) {
-		// case "DATA":
-		// System.out.println("TYPE IS DATA OK!");
-		// if (idx.getDsl() != null) {
-		// cpidx.CopyIndexByQueryDsl(sourceclient, idx.getSource_index(),
-		// targetclient,
-		// idx.getTarget_index(), idx.getDsl().toString());
-		//
-		// } else {
-		// cpidx.CopyIndex(sourceclient, idx.getSource_index(), targetclient,
-		// idx.getTarget_index());
-		// }
-		// break;
-		// case "META":
-		// System.out.println("TYPE IS META OK!");
-		// cpidx.CopyIndexMetadata(sourceclient, idx.getSource_index(),
-		// targetclient, idx.getTarget_index());
-		// break;
-		// case "FORCE":
-		// System.out.println("FORCE OK!");
-		// if (esidxtools.IndexExistes(targetclient, idx.getTarget_index())) {
-		// esidxtools.DeleteIndex(targetclient, idx.getTarget_index());
-		// }
-		//
-		// cpidx.CopyIndexMetadata(sourceclient, idx.getSource_index(),
-		// targetclient, idx.getTarget_index());
-		//
-		// if (idx.getDsl() != null) {
-		// cpidx.CopyIndexByQueryDsl(sourceclient, idx.getSource_index(),
-		// targetclient,
-		// idx.getTarget_index(), idx.getDsl().toString());
-		//
-		// } else {
-		// cpidx.CopyIndex(sourceclient, idx.getSource_index(), targetclient,
-		// idx.getTarget_index());
-		// }
-		// break;
-		// default:
-		// System.out.println("type must be set [data,meta,force]");
-		// break;
-		// }
-		//
-		// sourceclient.close();
-		// targetclient.close();
-		//
-		// }
-		//
-		// System.exit(0);
-		// }
-
-
-
+	
 		client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 				.getClient();
-
-
 
 		client.close();
 

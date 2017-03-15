@@ -105,6 +105,7 @@ public class BackupEsIndex {
 				new FileOutputStream(backup.getBackuppath() + backup.getIndexname() + ".meta"));
 		oos.writeObject(indexmeta);
 		oos.close();
+
 		// 写日志
 		logmsg.put("Action", "backup index meta");
 		logmsg.put("Index", backup.getIndexname());
@@ -151,8 +152,7 @@ public class BackupEsIndex {
 
 			for (SearchHit hit : scrollResp.getHits().getHits()) {
 				docmap.clear();
-				// System.out.println(hit.getSourceAsString().replaceAll("\\s+",
-				// ""));
+		
 				docmap.put("_type", hit.getType());
 				docmap.put("_id", hit.getId());
 				docmap.put("_source", hit.getSource());
@@ -164,7 +164,7 @@ public class BackupEsIndex {
 			fw.flush();
 			fw.close();
 			filenumber++;
-			logmsg.clear();
+			
 			logmsg.clear();
 			logmsg.put("Action", "backup index data");
 			logmsg.put("Index", backup.getIndexname());
@@ -172,6 +172,20 @@ public class BackupEsIndex {
 					new File(backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data")
 							.getAbsolutePath());
 			logger.info(jsonutil.MapToJson(logmsg));
+			// 压缩data文件
+			if (backup.getZip()) {
+				ZipUtilities ziputil = new ZipUtilities();
+				FileUtilities fileutil = new FileUtilities();
+				ziputil.zipfile(filename, filename + ".zip", null);
+				fileutil.deleteFile(filename);
+				logmsg.clear();
+				logmsg.put("Action", "Create zip file");
+				logmsg.put("Index", backup.getIndexname());
+				logmsg.put("zipfile",
+						new File(backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data"+".zip")
+								.getAbsolutePath());
+				logger.info(jsonutil.MapToJson(logmsg));
+			}
 
 			if (scrollResp.getHits().getHits().length == 0) {
 				break;
