@@ -16,7 +16,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 //create a single Jar with all dependencies
-version=0.1
+version='2.3.3'
 
 jar {
 	manifest {
