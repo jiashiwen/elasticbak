@@ -74,33 +74,33 @@ gradle clean build
 * 备份索引
 ```
 java -jar elasticbak-0.1.jar \
-     && --exp \
-     && --cluster es-example \
-     && --host 192.168.0.1 \
-     && --filesize 1000 \
-     && --backupdir ./backupesidx \
-     && --backupindexes index1,index2,index3,idx_* \
-     && --threads 4
+--exp \
+--cluster es-example \
+--host 192.168.0.1 \
+--filesize 1000 \
+--backupdir ./backupesidx \
+--backupindexes index1,index2,index3,idx_* \
+--threads 4
 ```
 *备份集群中所有索引
 ```
 java -jar elasticbak-0.1.jar \
-     && --exp \
-     && --cluster es-example \
-     && --host 192.168.0.1 \
-     && --filesize 1000 \
-     && --backupdir ./backupesidx \
-     && --backupindexes "*" \
-     && --threads 4
+--exp \
+--cluster es-example \
+--host 192.168.0.1 \
+--filesize 1000 \
+--backupdir ./backupesidx \
+--backupindexes "*" \
+--threads 4
 ```
 *恢复名为idxexample的索引
 ```
 java -jar elasticbak-0.1.jar \
-     && --imp \
-     && --cluster es-example \
-     && --host 192.168.0.1 \
-     && --restoreindex idxexample \
-     && --metafile backupset/idx/idx.meta \
-     && --backupset backuspset/idx \
-     && --threads 4
+--imp \
+--cluster es-example \
+--host 192.168.0.1 \
+--restoreindex idxexample \
+--metafile backupset/idx/idx.meta \
+--backupset backuspset/idx \
+--threads 4
 ```

@@ -83,33 +83,33 @@ you should see 'build/libs/elastictbak-1.0.jar‘
 * backup indexes
 ```
 java -jar elasticbak-0.1.jar \
-     && --exp \
-     && --cluster es-example \
-     && --host 192.168.0.1 \
-     && --filesize 1000 \
-     && --backupdir ./backupesidx \
-     && --backupindexes index1,index2,index3,idx_* \
-     && --threads 4
+--exp \
+--cluster es-example \
+--host 192.168.0.1 \
+--filesize 1000 \
+--backupdir ./backupesidx \
+--backupindexes index1,index2,index3,idx_* \
+--threads 4
 ```
 * backup all indexes in the cluster
 ```
 java -jar elasticbak-0.1.jar \
-     && --exp \
-     && --cluster es-example \
-     && --host 192.168.0.1 \
-     && --filesize 1000 \
-     && --backupdir ./backupesidx \
-     && --backupindexes "*" \
-     && --threads 4
+--exp \
+--cluster es-example \
+--host 192.168.0.1 \
+--filesize 1000 \
+--backupdir ./backupesidx \
+--backupindexes "*" \
+--threads 4
 ```
 * restore indexe named idxexample
 ```
 java -jar elasticbak-0.1.jar \
-     && --imp \
-     && --cluster es-example \
-     && --host 192.168.0.1 \
-     && --restoreindex idxexample \
-     && --metafile backupset/idx/idx.meta \
-     && --backupset backuspset/idx \
-     && --threads 4
+--imp \
+--cluster es-example \
+--host 192.168.0.1 \
+--restoreindex idxexample \
+--metafile backupset/idx/idx.meta \
+--backupset backuspset/idx \
+--threads 4
 ```
