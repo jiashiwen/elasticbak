@@ -79,7 +79,7 @@ public class BackupEsIndex {
 		IndexMeta indexmeta = new IndexMeta();
 
 		Settings settings = imd.getSettings();
-		Set<Entry<String, String>> set = settings.getAsMap().entrySet();
+		Map<String, String>set = settings.getAsMap();
 		indexmeta.setIdxsetting(set);
 
 		// 获取index mapping
