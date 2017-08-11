@@ -8,8 +8,6 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
@@ -24,8 +22,8 @@ import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.elasticsearch.search.sort.SortParseElement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +37,8 @@ public class BackupEsIndex {
 	private JsonUtilities jsonutil = new JsonUtilities();
 	private BackupEntity backup;
 	private Map<String, Object> logmsg;
-
+	
+	
 	public BackupEntity getBackup() {
 		return backup;
 	}
@@ -79,11 +78,15 @@ public class BackupEsIndex {
 		IndexMeta indexmeta = new IndexMeta();
 
 		Settings settings = imd.getSettings();
-		Set<Entry<String, String>> set = settings.getAsMap().entrySet();
+		  for (String key : settings.getAsMap().keySet()) {
+			   System.out.println("key= "+ key + " and value= " + settings.getAsMap().get(key));
+			  }
+//		Set<Entry<String, String>> set = settings.getAsMap().entrySet();
+		Map<String,String> set=settings.getAsMap();
 		indexmeta.setIdxsetting(set);
 
 		// 获取index mapping
-		Map<String, Object> mapping = new HashMap<>();
+		Map<String, Object> mapping = new HashMap<String, Object>();
 		GetMappingsResponse res = backup.getClient().admin().indices()
 				.getMappings(new GetMappingsRequest().indices(backup.getIndexname())).get();
 		ImmutableOpenMap<String, MappingMetaData> idxmapping = res.mappings().get(backup.getIndexname());
@@ -132,7 +135,7 @@ public class BackupEsIndex {
 		doc.delete(0, doc.length());
 		docmap.clear();
 		SearchResponse scrollResp = backup.getClient().prepareSearch(backup.getIndexname())
-				.addSort(SortParseElement.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000)).setQuery(qb)
+				.addSort(FieldSortBuilder.DOC_FIELD_NAME, SortOrder.ASC).setScroll(new TimeValue(60000)).setQuery(qb)
 				.setSize(backup.getDocsperfile()).execute().actionGet();
 
 		if (!backup.getBackuppath().endsWith(File.separator)) {

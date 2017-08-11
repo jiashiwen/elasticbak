@@ -9,13 +9,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
+import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +34,7 @@ public class RestoreEsIndex {
 
 	public RestoreEsIndex() {
 		logger = LoggerFactory.getLogger("elasticbak");
-		logmsg = logmsg = new HashMap<String, Object>();
+		logmsg = new HashMap<String, Object>();
 	}
 
 	public RestoreIndexEntity getRestoreindex() {
@@ -72,17 +70,16 @@ public class RestoreEsIndex {
 		IndexMeta indexmeta = (IndexMeta) objectInputStream.readObject();
 
 		// 获取setting和mapping
-		Set<Entry<String, String>> settings = (Set<Entry<String, String>>) indexmeta.getIdxsetting();
+		Map<String, String> settings = (Map<String, String>) indexmeta.getIdxsetting();
 		HashMap<String, Object> mappings = (HashMap<String, Object>) indexmeta.getIdxmapping();
 
 		// 处理settings
-		for (Map.Entry<String, String> m : settings) {
+		for (String key : settings.keySet()) {
 
-			if (m.getKey().equals("index.uuid") || m.getKey().equals("index.version.created")
-					|| m.getKey().equals("index.creation_date")) {
+			if (key.equals("index.uuid") || key.equals("index.version.created") || key.equals("index.creation_date")) {
 				continue;
 			} else {
-				settingbuilder.put(m.getKey(), m.getValue());
+				settingbuilder.put(key, settings.get(key));
 			}
 		}
 
@@ -90,17 +87,17 @@ public class RestoreEsIndex {
 		client.admin().indices().prepareCreate(indexname).setSettings(settingbuilder).get();
 		logmsg.clear();
 		logmsg.put("Action", "Create index");
-		logmsg.put("Index", indexname);	
+		logmsg.put("Index", indexname);
 		logger.info(jsonutil.MapToJson(logmsg));
-		
+
 		// 创建索引mapping
 		for (String key : mappings.keySet()) {
 			client.admin().indices().preparePutMapping(indexname).setType(key).setSource((Map<?, ?>) mappings.get(key))
 					.get();
-		}      
+		}
 		logmsg.clear();
 		logmsg.put("Action", "Add index mapping");
-		logmsg.put("Index", indexname);	
+		logmsg.put("Index", indexname);
 		logmsg.put("mapping", mappings);
 		logger.info(jsonutil.MapToJson(logmsg));
 	}
@@ -126,7 +123,7 @@ public class RestoreEsIndex {
 		if (datafile.getName().endsWith(".data")) {
 			JsonUtilities jsonutil = new JsonUtilities();
 			Map<String, Object> map;
-		
+
 			reader = new BufferedReader(new FileReader(datafile));
 			BulkRequestBuilder bulkRequest = client.prepareBulk();
 
@@ -136,15 +133,15 @@ public class RestoreEsIndex {
 				map = jsonutil.JsonToMap(tempString);
 
 				bulkRequest.add(client.prepareIndex(indexname, (String) map.get("_type"), (String) map.get("_id"))
-						.setSource(jsonutil.MapToJson((Map<String, Object>) map.get("_source"))));
+						.setSource(jsonutil.MapToJson((Map<String, Object>) map.get("_source")),XContentType.JSON));
 
 			}
 			bulkRequest.execute().actionGet();
 			client.admin().indices().prepareRefresh(indexname).get();
-			
+
 			logmsg.clear();
 			logmsg.put("Action", "Restore data");
-			logmsg.put("Index", indexname);	
+			logmsg.put("Index", indexname);
 			logmsg.put("FileName", datafile.getAbsolutePath());
 			logger.info(jsonutil.MapToJson(logmsg));
 		}
@@ -158,7 +155,7 @@ public class RestoreEsIndex {
 			ziputil.unzipfile(zipfile, zipfile.getAbsolutePath().replace(zipfile.getName(), ""), "");
 			logmsg.clear();
 			logmsg.put("Action", "Unzip file");
-			logmsg.put("Index", indexname);	
+			logmsg.put("Index", indexname);
 			logmsg.put("FileName", zipfile.getAbsolutePath());
 			logger.info(jsonutil.MapToJson(logmsg));
 			this.restoreDataFromFile(client, indexname, new File(zipfile.getAbsolutePath().replace(".zip", "")));

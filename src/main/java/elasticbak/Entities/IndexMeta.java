@@ -2,10 +2,6 @@ package elasticbak.Entities;
 
 import java.io.Serializable;
 import java.util.Map;
-import java.util.Set;
-
-import org.elasticsearch.cluster.metadata.MappingMetaData;
-import org.elasticsearch.common.collect.ImmutableOpenMap;
 
 public class IndexMeta implements Serializable {
 
@@ -14,15 +10,17 @@ public class IndexMeta implements Serializable {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private Set<?> idxsetting;
+	private Map<String, String> idxsetting;
 
 	private Map<String, Object> idxmapping;
 
-	public Set<?> getIdxsetting() {
+
+
+	public Map<String, String> getIdxsetting() {
 		return idxsetting;
 	}
 
-	public void setIdxsetting(Set<?> idxsetting) {
+	public void setIdxsetting(Map<String, String> idxsetting) {
 		this.idxsetting = idxsetting;
 	}
 
