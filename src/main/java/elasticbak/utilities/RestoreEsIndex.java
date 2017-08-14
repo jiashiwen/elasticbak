@@ -85,8 +85,8 @@ public class RestoreEsIndex {
 
 		// 处理settings
 		for (String key : settings.keySet()) {
-
-			if (key.equals("index.uuid") || key.equals("index.version.created") || key.equals("index.creation_date")) {
+			if (key.equals("index.uuid") || key.equals("index.version.created") || key.equals("index.creation_date")
+					|| key.equals("index.provided_name")) {
 				continue;
 			} else {
 				settingbuilder.put(key, settings.get(key));

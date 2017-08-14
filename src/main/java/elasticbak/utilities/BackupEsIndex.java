@@ -76,10 +76,7 @@ public class BackupEsIndex {
 		IndexMeta indexmeta = new IndexMeta();
 
 		Settings settings = imd.getSettings();
-		for (String key : settings.getAsMap().keySet()) {
-			System.out.println("key= " + key + " and value= " + settings.getAsMap().get(key));
-		}
-
+	
 		Map<String, String> set = settings.getAsMap();
 		indexmeta.setIdxsetting(set);
 

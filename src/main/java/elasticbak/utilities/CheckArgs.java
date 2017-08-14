@@ -79,7 +79,7 @@ public class CheckArgs {
 				args.setBackupdir(args.getBackupdir() + File.separator);
 			}
 
-			//生成备份索引集合
+			// 生成备份索引集合
 			for (String bakidx : backupindexes) {
 				if (dealstring.includewildcard(bakidx)) {
 					for (String idec : allindeces) {
@@ -88,14 +88,14 @@ public class CheckArgs {
 						}
 					}
 				} else {
-					if(allindeces.contains(bakidx)){
+					if (allindeces.contains(bakidx)) {
 						backupindeces.add(bakidx);
 					}
 				}
 			}
-			
-			//校验备份集是否存在
-			for(String backupindex:backupindeces){
+
+			// 校验备份集是否存在
+			for (String backupindex : backupindeces) {
 				if ((new File(args.getBackupdir() + backupindex).exists())) {
 					logger.error(MessageFormat.format("[{0}]:{1}", (args.getBackupdir() + backupindex),
 							new String("The backupset has been exists!")));
@@ -106,15 +106,19 @@ public class CheckArgs {
 		}
 
 		if (args.isImp()) {
-			if (!(new File(args.getMetafile()).exists())) {
-				logger.error(MessageFormat.format("['--metafile '{0}]:{1}", args.getMetafile(), "Not exists!"));
-				return false;
+			if (args.getRestoretype().toLowerCase().equals("meta")
+					|| args.getRestoretype().toLowerCase().equals("force")) {
+				if (!(new File(args.getMetafile()).exists())) {
+					logger.error(MessageFormat.format("['--metafile '{0}]:{1}", args.getMetafile(), "File not exists!"));
+					return false;
+				}
+				if (!(new File(args.getMetafile()).isFile())) {
+					logger.error(MessageFormat.format("['--metafile '{0}]:{1}", args.getMetafile(),
+							"Metafile must be file!"));
+					return false;
+				}
 			}
-			if (!(new File(args.getMetafile()).isFile())) {
-				logger.error(
-						MessageFormat.format("['--metafile '{0}]:{1}", args.getMetafile(), "Metafile must be file!"));
-				return false;
-			}
+
 			if (!(new File(args.getBackupset()).exists())) {
 				logger.error(MessageFormat.format("['--datafolder '{0}]:{1}", args.getBackupset(), "Not Exists!"));
 				return false;
@@ -131,6 +135,5 @@ public class CheckArgs {
 	public Set<String> getBackupindeces() {
 		return backupindeces;
 	}
-
 
 }

@@ -25,6 +25,7 @@ import elasticbak.service.ParallelRestoreDataService;
 import elasticbak.utilities.BackupEsIndex;
 import elasticbak.utilities.CheckArgs;
 import elasticbak.utilities.ElasticsearchConnector;
+import elasticbak.utilities.ElasticsearchIndexTools;
 import elasticbak.utilities.FileUtilities;
 import elasticbak.utilities.RestoreEsIndex;
 
@@ -37,6 +38,7 @@ public class ElasticBakMain {
 		Date dt = new Date();
 		DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
 		String nowtime = df.format(dt);
+		ElasticsearchIndexTools estools = new ElasticsearchIndexTools();
 
 		ObjectMapper objectMapper = new ObjectMapper();
 		ArgsSettingEntity argssetting = new ArgsSettingEntity();
@@ -61,7 +63,7 @@ public class ElasticBakMain {
 			System.exit(0);
 		}
 
-		check=new CheckArgs(argssetting);
+		check = new CheckArgs(argssetting);
 		if (argssetting.isHelp()) {
 			jc.usage();
 			System.exit(0);
@@ -71,9 +73,9 @@ public class ElasticBakMain {
 			jc.usage();
 			System.exit(0);
 		}
-		
-//		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
-		String json = objectMapper.writeValueAsString(argssetting);
+
+		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
+		// String json = objectMapper.writeValueAsString(argssetting);
 		logger.info("Your command line setting is: " + json);
 
 		// 索引备份
@@ -88,8 +90,6 @@ public class ElasticBakMain {
 
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
-
-
 
 			for (String bakidx : check.getBackupindeces()) {
 				BackupEntity backup = new BackupEntity();
@@ -117,49 +117,65 @@ public class ElasticBakMain {
 			ExecutorService execservice = Executors.newFixedThreadPool(argssetting.getThreads());
 			CompletionService<Long> completionService = new ExecutorCompletionService<Long>(execservice);
 			int tasks = 0;
-			// 判断文件是否存在
-			File file = new File(argssetting.getMetafile());
-			if (!file.exists()) {
-				logger.error("Metafile not exists");
-				System.exit(0);
-			}
 
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
 
 			RestoreEsIndex restoreindex = new RestoreEsIndex();
-			// 从备份meta文件重建索引
-			restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
-					new File(argssetting.getMetafile()));
 
-			// 恢复数据
-			List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getBackupset());
-			for (File f : datafiles) {
-				if (f.getName().endsWith(".data")||f.getName().endsWith(".data.zip")) {
-					RestoreDataEntity data = new RestoreDataEntity();
-					data.setClient(client);
-					data.setIndexname(argssetting.getRestoreindex());
-					data.setDatafile(f);
-					RestoreEsIndex ridx = new RestoreEsIndex();
-					ridx.setRestordata(data);
-					completionService.submit(new ParallelRestoreDataService(ridx));
-					tasks++;
-				}
+			if (argssetting.getRestoretype().toLowerCase().equals("meta")
+					|| argssetting.getRestoretype().toLowerCase().equals("force")) {
+				// 从备份meta文件重建索引
+				restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
+						new File(argssetting.getMetafile()));
 			}
 
-			for (int i = 0; i < tasks; i++) {
-				completionService.take().get();
+			if (argssetting.getRestoretype().toLowerCase().equals("normal")
+					&& !estools.IndexExistes(client, argssetting.getRestoreindex())) {
+				// 判断meta文件是否存在
+				File file = new File(argssetting.getMetafile());
+				if (!file.exists()) {
+					logger.error("Metafile not exists");
+					System.exit(0);
+				}
+				// 从备份meta文件重建索引
+				restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
+						new File(argssetting.getMetafile()));
+			}
+
+			if (argssetting.getRestoretype().toLowerCase().equals("normal")
+					|| argssetting.getRestoretype().toLowerCase().equals("dataonly")
+					|| argssetting.getRestoretype().toLowerCase().equals("force")) {
+				// 恢复数据
+				List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getBackupset());
+				for (File f : datafiles) {
+					if (f.getName().endsWith(".data") || f.getName().endsWith(".data.zip")) {
+						RestoreDataEntity data = new RestoreDataEntity();
+						data.setClient(client);
+						data.setIndexname(argssetting.getRestoreindex());
+						data.setDatafile(f);
+						RestoreEsIndex ridx = new RestoreEsIndex();
+						ridx.setRestordata(data);
+						completionService.submit(new ParallelRestoreDataService(ridx));
+						tasks++;
+					}
+				}
+
+				for (int i = 0; i < tasks; i++) {
+					completionService.take().get();
+				}
 			}
 
 			client.close();
 			System.exit(0);
 
 		}
-	
-		client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
-				.getClient();
 
-		client.close();
+		// client = new ElasticsearchConnector(argssetting.getCluster(),
+		// argssetting.getHost(), argssetting.getPort())
+		// .getClient();
+		// client.close();
+		System.exit(0);
 
 	}
 

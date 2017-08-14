@@ -37,8 +37,8 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--threads", description = "Threads for backup or restore,default is 2")
 	private int threads = 2;
 
-	@Parameter(names = "--type", description = "Transfor type value is [data,meta,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
-	private String type = "meta";
+	@Parameter(names = "--restoretype", description = "Transfor type value is [dataonly,meta,normal,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
+	private String restoretype = "normal";
 
 	@Parameter(names = "--dsl", description = "elasticsearch query dsl for Preform a partial transfor based on search results.you must make content of this variable between '',just like  '{\"query\":{\"term\":{\"word.primitive\":{\"value\":\"keywork\"}}}}' ")
 	private String dsl;
@@ -52,10 +52,9 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--metafile", description = "Restore Index from metadata,include sttings and mappings")
 	private String metafile = "";
 
-	@Parameter(names="--zip", description="Zip datafile ,default is false",arity = 0)
-	private Boolean zip=false;
+	@Parameter(names = "--zip", description = "Zip datafile ,default is false", arity = 0)
+	private Boolean zip = false;
 
-	
 	public Boolean getZip() {
 		return zip;
 	}
@@ -120,12 +119,12 @@ public class ArgsSettingEntity {
 		this.backupindexes = backupindexes;
 	}
 
-	public String getType() {
-		return type;
+	public String getRestoretype() {
+		return restoretype;
 	}
 
-	public void setType(String type) {
-		this.type = type;
+	public void setRestoretype(String restoretype) {
+		this.restoretype = restoretype;
 	}
 
 	public String getDsl() {
