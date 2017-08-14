@@ -53,7 +53,7 @@ public class RestoreEsIndex {
 		this.restordata = restordata;
 	}
 
-	public void CreateIdxFromMetaFile() throws FileNotFoundException, ClassNotFoundException, IOException {
+	public void CreateIdxFromMetaFile() throws FileNotFoundException,  IOException, ClassNotFoundException {
 		this.CreateIdxFromMetaFile(restoreindex);
 	}
 
@@ -67,8 +67,12 @@ public class RestoreEsIndex {
 		Settings.Builder settingbuilder = Settings.builder();
 
 		objectInputStream = new ObjectInputStream(new FileInputStream(metafile));
+		System.out.println(metafile.getName());
+		Object obj=objectInputStream.readObject();
+		System.out.print(obj instanceof IndexMeta);
+		
 		IndexMeta indexmeta = (IndexMeta) objectInputStream.readObject();
-
+		
 		// 获取setting和mapping
 		Map<String, String> settings = (Map<String, String>) indexmeta.getIdxsetting();
 		HashMap<String, Object> mappings = (HashMap<String, Object>) indexmeta.getIdxmapping();
