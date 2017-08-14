@@ -6,18 +6,19 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
+import org.apache.commons.io.FileUtils;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
-import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.IndexMeta;
 import elasticbak.Entities.RestoreDataEntity;
@@ -33,10 +34,11 @@ public class RestoreEsIndex {
 	private RestoreDataEntity restordata;
 	private Map<String, Object> logmsg;
 	private Logger logger;
+	private InputStreamReader isr;
 
 	public RestoreEsIndex() {
 		logger = LoggerFactory.getLogger("elasticbak");
-		logmsg = logmsg = new HashMap<String, Object>();
+		logmsg = new HashMap<String, Object>();
 	}
 
 	public RestoreIndexEntity getRestoreindex() {
@@ -68,9 +70,19 @@ public class RestoreEsIndex {
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		Settings.Builder settingbuilder = Settings.builder();
 
-		objectInputStream = new ObjectInputStream(new FileInputStream(metafile));
-		IndexMeta indexmeta = (IndexMeta) objectInputStream.readObject();
-
+		// 饭序列化
+		// objectInputStream = new ObjectInputStream(new
+		// FileInputStream(metafile));
+		// IndexMeta indexmeta = (IndexMeta) objectInputStream.readObject();
+		//判断文件编码
+		FileInputStream fis = new FileInputStream(metafile);
+		isr = new InputStreamReader(fis);
+		String fileecoding=isr.getEncoding();
+		//读取文件
+		String json = FileUtils.readFileToString(metafile,fileecoding);
+	
+		ObjectMapper mapper = new ObjectMapper();
+		IndexMeta indexmeta = mapper.readValue(json, IndexMeta.class);
 		// 获取setting和mapping
 		Map<String, String> settings = (Map<String, String>) indexmeta.getIdxsetting();
 		HashMap<String, Object> mappings = (HashMap<String, Object>) indexmeta.getIdxmapping();

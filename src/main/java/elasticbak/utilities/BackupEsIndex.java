@@ -2,14 +2,10 @@ package elasticbak.utilities;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
@@ -30,6 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.BackupEntity;
 import elasticbak.Entities.IndexMeta;
@@ -79,7 +76,7 @@ public class BackupEsIndex {
 		IndexMeta indexmeta = new IndexMeta();
 
 		Settings settings = imd.getSettings();
-		Map<String, String>set = settings.getAsMap();
+		Map<String, String> set = settings.getAsMap();
 		indexmeta.setIdxsetting(set);
 
 		// 获取index mapping
@@ -100,11 +97,22 @@ public class BackupEsIndex {
 		if (0 == backup.getBackuppath().indexOf("./")) {
 			backup.setBackuppath(backup.getBackuppath().replace("./", ""));
 		}
+		// IndexMetaData 转 json
+		ObjectMapper mapper = new ObjectMapper();
+		String indexmetajson = mapper.writeValueAsString(indexmeta);
 
-		ObjectOutputStream oos = new ObjectOutputStream(
-				new FileOutputStream(backup.getBackuppath() + backup.getIndexname() + ".meta"));
-		oos.writeObject(indexmeta);
-		oos.close();
+		// 写入文件
+		String filename = backup.getBackuppath() + backup.getIndexname() + ".meta";
+		FileWriter fw = new FileWriter(filename);
+		fw.write(indexmetajson);
+		fw.flush();
+		fw.close();
+		// 序列化到文件
+		// ObjectOutputStream oos = new ObjectOutputStream(
+		// new FileOutputStream(backup.getBackuppath() + backup.getIndexname() +
+		// ".meta"));
+		// oos.writeObject(indexmeta);
+		// oos.close();
 
 		// 写日志
 		logmsg.put("Action", "backup index meta");
@@ -152,7 +160,7 @@ public class BackupEsIndex {
 
 			for (SearchHit hit : scrollResp.getHits().getHits()) {
 				docmap.clear();
-		
+
 				docmap.put("_type", hit.getType());
 				docmap.put("_id", hit.getId());
 				docmap.put("_source", hit.getSource());
@@ -164,7 +172,7 @@ public class BackupEsIndex {
 			fw.flush();
 			fw.close();
 			filenumber++;
-			
+
 			logmsg.clear();
 			logmsg.put("Action", "backup index data");
 			logmsg.put("Index", backup.getIndexname());
@@ -182,7 +190,7 @@ public class BackupEsIndex {
 				logmsg.put("Action", "Create zip file");
 				logmsg.put("Index", backup.getIndexname());
 				logmsg.put("zipfile",
-						new File(backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data"+".zip")
+						new File(backup.getBackuppath() + backup.getIndexname() + "_" + filenumber + ".data" + ".zip")
 								.getAbsolutePath());
 				logger.info(jsonutil.MapToJson(logmsg));
 			}
