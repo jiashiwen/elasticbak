@@ -51,6 +51,7 @@ dependencies {
 	
 
 //	compile group: 'org.elasticsearch', name: 'elasticsearch', version: '2.3.3'
+	compile group: 'commons-io', name: 'commons-io', version: '2.5'
 	compile group: 'org.elasticsearch.client', name: 'transport', version: '5.5.1'
 	compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.6.6'
 

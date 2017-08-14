@@ -6,16 +6,19 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.ObjectInputStream;
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.io.FileUtils;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import elasticbak.Entities.IndexMeta;
 import elasticbak.Entities.RestoreDataEntity;
@@ -25,12 +28,12 @@ import net.lingala.zip4j.exception.ZipException;
 public class RestoreEsIndex {
 
 	private BufferedReader reader;
-	private ObjectInputStream objectInputStream;
 	private JsonUtilities jsonutil = new JsonUtilities();
 	private RestoreIndexEntity restoreindex;
 	private RestoreDataEntity restordata;
 	private Map<String, Object> logmsg;
 	private Logger logger;
+	private InputStreamReader isr;
 
 	public RestoreEsIndex() {
 		logger = LoggerFactory.getLogger("elasticbak");
@@ -53,7 +56,7 @@ public class RestoreEsIndex {
 		this.restordata = restordata;
 	}
 
-	public void CreateIdxFromMetaFile() throws FileNotFoundException,  IOException, ClassNotFoundException {
+	public void CreateIdxFromMetaFile() throws FileNotFoundException, IOException, ClassNotFoundException {
 		this.CreateIdxFromMetaFile(restoreindex);
 	}
 
@@ -66,13 +69,16 @@ public class RestoreEsIndex {
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		Settings.Builder settingbuilder = Settings.builder();
 
-		objectInputStream = new ObjectInputStream(new FileInputStream(metafile));
-		System.out.println(metafile.getName());
-		Object obj=objectInputStream.readObject();
-		System.out.print(obj instanceof IndexMeta);
-		
-		IndexMeta indexmeta = (IndexMeta) objectInputStream.readObject();
-		
+		// 判断文件编码
+		FileInputStream fis = new FileInputStream(metafile);
+		isr = new InputStreamReader(fis);
+		String fileecoding = isr.getEncoding();
+		// 读取文件
+		String json = FileUtils.readFileToString(metafile, fileecoding);
+
+		ObjectMapper mapper = new ObjectMapper();
+		IndexMeta indexmeta = mapper.readValue(json, IndexMeta.class);
+
 		// 获取setting和mapping
 		Map<String, String> settings = (Map<String, String>) indexmeta.getIdxsetting();
 		HashMap<String, Object> mappings = (HashMap<String, Object>) indexmeta.getIdxmapping();
@@ -137,7 +143,7 @@ public class RestoreEsIndex {
 				map = jsonutil.JsonToMap(tempString);
 
 				bulkRequest.add(client.prepareIndex(indexname, (String) map.get("_type"), (String) map.get("_id"))
-						.setSource(jsonutil.MapToJson((Map<String, Object>) map.get("_source")),XContentType.JSON));
+						.setSource(jsonutil.MapToJson((Map<String, Object>) map.get("_source")), XContentType.JSON));
 
 			}
 			bulkRequest.execute().actionGet();
