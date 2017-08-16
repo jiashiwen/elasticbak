@@ -37,7 +37,7 @@ public class ArgsSettingEntity {
 	@Parameter(names = "--threads", description = "Threads for backup or restore,default is 2")
 	private int threads = 2;
 
-	@Parameter(names = "--restoretype", description = "Transfor type value is [dataonly,meta,normal,force] and default value is 'meta'.If value is 'metadata' try to create a new empty target index as source;'data' copy source index documents to target index; 'force' delete target index if exists and copy source index to target index.")
+	@Parameter(names = "--restoretype", description = "Transfor type value is [dataonly,meta,normal,force] and default value is 'normal'.If value is 'meta' only create index from meta file;'dataonly' index has exists only restore data; 'force' delete exists index and restore.")
 	private String restoretype = "normal";
 
 	@Parameter(names = "--dsl", description = "elasticsearch query dsl for Preform a partial transfor based on search results.you must make content of this variable between '',just like  '{\"query\":{\"term\":{\"word.primitive\":{\"value\":\"keywork\"}}}}' ")

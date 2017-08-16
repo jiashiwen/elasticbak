@@ -123,8 +123,7 @@ public class ElasticBakMain {
 
 			RestoreEsIndex restoreindex = new RestoreEsIndex();
 
-			if (argssetting.getRestoretype().toLowerCase().equals("meta")
-					|| argssetting.getRestoretype().toLowerCase().equals("force")) {
+			if (argssetting.getRestoretype().toLowerCase().equals("meta")) {
 				// 从备份meta文件重建索引
 				restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
 						new File(argssetting.getMetafile()));
@@ -138,6 +137,16 @@ public class ElasticBakMain {
 					logger.error("Metafile not exists");
 					System.exit(0);
 				}
+				// 从备份meta文件重建索引
+				restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
+						new File(argssetting.getMetafile()));
+			}
+
+			if (argssetting.getRestoretype().toLowerCase().equals("force")
+					&& estools.IndexExistes(client, argssetting.getRestoreindex())) {
+				// 删除索引
+				estools.DeleteIndex(client, argssetting.getRestoreindex());
+
 				// 从备份meta文件重建索引
 				restoreindex.CreateIdxFromMetaFile(client, argssetting.getRestoreindex(),
 						new File(argssetting.getMetafile()));
