@@ -88,8 +88,7 @@ public class BackupEsIndex {
 			mapping.put(c.key, c.value.getSourceAsMap());
 		}
 		indexmeta.setIdxmapping(mapping);
-
-		// 序列化对象到文件
+		
 		if (!backup.getBackuppath().endsWith(File.separator)) {
 			backup.setBackuppath(backup.getBackuppath() + File.separator);
 		}
@@ -97,6 +96,7 @@ public class BackupEsIndex {
 		if (0 == backup.getBackuppath().indexOf("./")) {
 			backup.setBackuppath(backup.getBackuppath().replace("./", ""));
 		}
+		
 		// IndexMetaData 转 json
 		ObjectMapper mapper = new ObjectMapper();
 		String indexmetajson = mapper.writeValueAsString(indexmeta);
@@ -107,12 +107,6 @@ public class BackupEsIndex {
 		fw.write(indexmetajson);
 		fw.flush();
 		fw.close();
-		// 序列化到文件
-		// ObjectOutputStream oos = new ObjectOutputStream(
-		// new FileOutputStream(backup.getBackuppath() + backup.getIndexname() +
-		// ".meta"));
-		// oos.writeObject(indexmeta);
-		// oos.close();
 
 		// 写日志
 		logmsg.put("Action", "backup index meta");

@@ -88,9 +88,7 @@ public class ElasticBakMain {
 
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
-
-
-
+			
 			for (String bakidx : check.getBackupindeces()) {
 				BackupEntity backup = new BackupEntity();
 				String backpath = argssetting.getBackupdir() + bakidx + File.separator;

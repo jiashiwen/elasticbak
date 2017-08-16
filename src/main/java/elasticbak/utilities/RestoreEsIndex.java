@@ -7,7 +7,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.ObjectInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +27,6 @@ import net.lingala.zip4j.exception.ZipException;
 public class RestoreEsIndex {
 
 	private BufferedReader reader;
-	private ObjectInputStream objectInputStream;
 	private JsonUtilities jsonutil = new JsonUtilities();
 	private RestoreIndexEntity restoreindex;
 	private RestoreDataEntity restordata;
@@ -70,10 +68,6 @@ public class RestoreEsIndex {
 			throws FileNotFoundException, IOException, ClassNotFoundException {
 		Settings.Builder settingbuilder = Settings.builder();
 
-		// 饭序列化
-		// objectInputStream = new ObjectInputStream(new
-		// FileInputStream(metafile));
-		// IndexMeta indexmeta = (IndexMeta) objectInputStream.readObject();
 		//判断文件编码
 		FileInputStream fis = new FileInputStream(metafile);
 		isr = new InputStreamReader(fis);
