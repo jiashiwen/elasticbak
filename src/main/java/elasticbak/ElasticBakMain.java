@@ -61,7 +61,7 @@ public class ElasticBakMain {
 			System.exit(0);
 		}
 
-		check=new CheckArgs(argssetting);
+		check = new CheckArgs(argssetting);
 		if (argssetting.isHelp()) {
 			jc.usage();
 			System.exit(0);
@@ -71,8 +71,9 @@ public class ElasticBakMain {
 			jc.usage();
 			System.exit(0);
 		}
-		
-//		String json = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
+
+		// String json =
+		// objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(argssetting);
 		String json = objectMapper.writeValueAsString(argssetting);
 		logger.info("Your command line setting is: " + json);
 
@@ -88,7 +89,7 @@ public class ElasticBakMain {
 
 			client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 					.getClient();
-			
+
 			for (String bakidx : check.getBackupindeces()) {
 				BackupEntity backup = new BackupEntity();
 				String backpath = argssetting.getBackupdir() + bakidx + File.separator;
@@ -133,7 +134,7 @@ public class ElasticBakMain {
 			// 恢复数据
 			List<File> datafiles = fileutilities.getFilesInTheFolder(argssetting.getBackupset());
 			for (File f : datafiles) {
-				if (f.getName().endsWith(".data")||f.getName().endsWith(".data.zip")) {
+				if (f.getName().endsWith(".data") || f.getName().endsWith(".data.zip")) {
 					RestoreDataEntity data = new RestoreDataEntity();
 					data.setClient(client);
 					data.setIndexname(argssetting.getRestoreindex());
@@ -153,7 +154,7 @@ public class ElasticBakMain {
 			System.exit(0);
 
 		}
-	
+
 		client = new ElasticsearchConnector(argssetting.getCluster(), argssetting.getHost(), argssetting.getPort())
 				.getClient();
 
