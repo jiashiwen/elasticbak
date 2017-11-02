@@ -5,6 +5,8 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
@@ -22,8 +24,6 @@ import org.elasticsearch.index.query.WrapperQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 
@@ -34,7 +34,7 @@ public class ElasticsearchCopyIndex {
 	private long count = 0;
 
 	public ElasticsearchCopyIndex() {
-		logger = LoggerFactory.getLogger(this.getClass());
+		logger = LogManager.getLogger(this.getClass());
 	}
 
 	public void CopyIndexMetadata(Client sourceclient, String sourceindex, Client targetclient, String targetindex)
@@ -69,7 +69,7 @@ public class ElasticsearchCopyIndex {
 				targetclient.admin().indices().preparePutMapping(targetindex).setType(c.key)
 						.setSource(c.value.getSourceAsMap()).get();
 			}
-		} catch (InterruptedException | ExecutionException | IOException e) {
+		} catch (InterruptedException | ExecutionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

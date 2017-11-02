@@ -11,12 +11,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.client.Client;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,7 +37,7 @@ public class RestoreEsIndex {
 	private InputStreamReader isr;
 
 	public RestoreEsIndex() {
-		logger = LoggerFactory.getLogger("elasticbak");
+		logger = LogManager.getLogger("elasticbak");
 		logmsg = new HashMap<String, Object>();
 	}
 

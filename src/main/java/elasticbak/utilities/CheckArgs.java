@@ -5,16 +5,16 @@ import java.text.MessageFormat;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.carrotsearch.hppc.cursors.ObjectCursor;
 
 import elasticbak.Entities.ArgsSettingEntity;
 
 public class CheckArgs {
-	private static final Logger logger = LoggerFactory.getLogger(CheckArgs.class);
+	private static final Logger logger = LogManager.getLogger(CheckArgs.class);
 	private ArgsSettingEntity args;
 	private Set<String> allindeces = new HashSet<String>();
 	private Set<String> backupindeces = new HashSet<String>();

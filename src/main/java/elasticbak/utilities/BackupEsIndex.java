@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.action.search.SearchResponse;
@@ -22,8 +24,7 @@ import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortOrder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 import com.carrotsearch.hppc.cursors.ObjectObjectCursor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -47,11 +48,11 @@ public class BackupEsIndex {
 
 	public BackupEsIndex(BackupEntity backupentity) {
 		this.backup = backupentity;
-		logger = LoggerFactory.getLogger("elasticbak");
+		logger = LogManager.getLogger("elasticbak");
 	}
 
 	public BackupEsIndex() {
-		logger = LoggerFactory.getLogger("elasticbak");
+		logger = LogManager.getLogger("elasticbak");
 
 	}
 

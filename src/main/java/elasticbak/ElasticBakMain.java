@@ -10,10 +10,9 @@ import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.client.Client;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,7 +30,7 @@ import elasticbak.utilities.RestoreEsIndex;
 
 public class ElasticBakMain {
 
-	private static final Logger logger = LoggerFactory.getLogger(ElasticBakMain.class);
+	private static final Logger logger = LogManager.getLogger(ElasticBakMain.class);
 
 	public static void main(String[] args) throws Exception {
 		// 获取系统当前时间

@@ -4,6 +4,8 @@ import java.net.UnknownHostException;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsRequest;
 import org.elasticsearch.action.admin.indices.mapping.get.GetMappingsResponse;
 import org.elasticsearch.client.Client;
@@ -11,8 +13,7 @@ import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 public class ElasticsearchIndexTools {
 	private Logger logger;
@@ -20,7 +21,7 @@ public class ElasticsearchIndexTools {
 	private Map<String, String> settings;
 	
 	public ElasticsearchIndexTools(){
-		logger = LoggerFactory.getLogger(this.getClass());		
+		logger = LogManager.getLogger(this.getClass());		
 	}
 
 	// 获取索引setting
